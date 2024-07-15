@@ -7,7 +7,7 @@
     "build": "tsc",
     "dev": "npx ts-node src/index.ts",
     "nodemon": "nodemon --exec npx ts-node src/index.ts",
-    "start": "node dist/src/index.js",
+    "start": "node dist/index.js",
     "prestart": "npm run build"
   },
   "keywords": [],
