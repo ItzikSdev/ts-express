@@ -5,8 +5,7 @@
   "main": "index.js",
   "scripts": {
     "build": "tsc",
-    "dev": "npx ts-node src/index.ts",
-    "nodemon": "nodemon --exec npx ts-node src/index.ts",
+    "dev": "nodemon --exec npx ts-node src/index.ts",
     "start": "node dist/index.js",
     "prestart": "npm run build"
   },
@@ -14,14 +13,20 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "axios": "^1.6.8",
+    "@types/mongoose": "^5.11.97",
+    "axios": "^1.7.5",
+    "bcrypt": "^5.1.1",
+    "crypto-js": "^4.2.0",
     "dotenv": "^16.4.5",
-    "express": "^4.19.2"
+    "express": "^4.19.2",
+    "mongoose": "^8.5.4"
   },
   "devDependencies": {
+    "@types/bcrypt": "^5.0.2",
+    "@types/crypto-js": "^4.2.2",
     "@types/express": "^4.17.21",
-    "@types/node": "^20.12.12",
-    "nodemon": "^3.1.0",
-    "typescript": "^5.4.5"
+    "@types/node": "^20.16.1",
+    "nodemon": "^3.1.4",
+    "typescript": "^5.5.4"
   }
 }
