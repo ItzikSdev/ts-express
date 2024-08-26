@@ -16,7 +16,7 @@ const UserControllerStaticClass = {
         return res.status(401).json({ message: "User Already Exists" });
       const password: string = bcrypt.hashSync(passwordBody, bcryptConfig.salt);
       const sha256 = crypto.SHA256;
-      const access_token: string = sha256("my-token").toString();
+      const access_token: string = sha256(name+email).toString();
       const newUser: IUser = await new User({
         name,
         email,
