@@ -4,9 +4,10 @@ export type TServerCommand = {
 };
 
 export type TUserReqBody = {
-  id: string;
-  name: string;
+  id?: string;
+  name?: string;
   email?: string;
   password?: string;
-  updatePassword: string;
+  updatePassword?: string;
+  access_token?: string;
 };
