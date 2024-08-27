@@ -79,7 +79,11 @@ const UserControllerStaticClass = {
       };
 
       const isPasswordValid = bcrypt.compareSync(password, user.password);
-      if ((!isPasswordValid && server.delete) || server.update) return false;
+      if (server) {
+        if (!isPasswordValid || server.delete || server.update) return false;
+      } else if (!isPasswordValid) {
+        return false;
+      }
 
       if (!isPasswordValid)
         return res
