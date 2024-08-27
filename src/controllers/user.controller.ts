@@ -1,11 +1,20 @@
 import { Request, Response } from "express";
 import User, { IUser } from "../db/user.model";
 
-import crypto from "crypto-js";
 import bcrypt from "bcrypt";
 import bcryptConfig from "../config/bcrypt";
+import {
+  accessTokenService,
+  bcryptPasswordService,
+} from "../services/user.service";
 
 const UserControllerStaticClass = {
+  /**
+   * create user
+   * @param req
+   * @param res
+   * @returns
+   */
   create: async (req: Request, res: Response) => {
     try {
       const { name, email, password: passwordBody } = req.body;
@@ -14,9 +23,8 @@ const UserControllerStaticClass = {
       const isUserExists = await User.findOne({ email }).exec();
       if (isUserExists)
         return res.status(401).json({ message: "User Already Exists" });
-      const password: string = bcrypt.hashSync(passwordBody, bcryptConfig.salt);
-      const sha256 = crypto.SHA256;
-      const access_token: string = sha256(name+email).toString();
+      const password: string = bcryptPasswordService(passwordBody);
+      const access_token: string = accessTokenService(email, password);
       const newUser: IUser = await new User({
         name,
         email,
@@ -29,7 +37,12 @@ const UserControllerStaticClass = {
       return res.status(500).json({ message: "Internal Server Error", error });
     }
   },
-
+  /**
+   * login user
+   * @param req \
+   * @param res
+   * @returns
+   */
   login: async (req: Request, res: Response) => {
     try {
       const { email, password, server } = req.body;
@@ -57,7 +70,12 @@ const UserControllerStaticClass = {
       return res.status(500).json({ message: "Internal Server Error", error });
     }
   },
-
+  /**
+   * get user by id
+   * @param req
+   * @param res
+   * @returns
+   */
   select: async (req: Request, res: Response) => {
     try {
       const { id: _id } = req.params;
@@ -73,7 +91,12 @@ const UserControllerStaticClass = {
       return res.status(500).json({ message: "Internal Server Error", error });
     }
   },
-
+  /**
+   * delete user
+   * @param req
+   * @param res
+   * @returns
+   */
   delete: async (req: Request, res: Response) => {
     try {
       const { email, password } = req.body;
@@ -88,6 +111,42 @@ const UserControllerStaticClass = {
       if (isLogin) {
         const deleted = await User.findOneAndDelete(isLogin).exec();
         res.status(202).json({ message: `User ${deleted?.email} is deleted` });
+      }
+    } catch (error) {
+      return res.status(500).json({ message: "Internal Server Error", error });
+    }
+  },
+  /**
+   * update user
+   * @param req
+   * @param res
+   * @returns
+   */
+  update: async (req: Request, res: Response) => {
+    try {
+      const { email, password, updatePassword } = req.body;
+      if (!email || !password)
+        return res.status(400).json({ message: "Missing data" });
+      req.body = {
+        email,
+        password,
+        server: { delete: true },
+      };
+      const isLogin = await UserControllerStaticClass.login(req, res);
+      if (isLogin) {
+        const password: string = bcrypt.hashSync(
+          updatePassword,
+          bcryptConfig.salt
+        );
+        const access_token: string = accessTokenService(email, updatePassword);
+
+        const updated = await User.findByIdAndUpdate(isLogin, {
+          password,
+          access_token,
+        }).exec();
+        res.status(202).json({
+          message: `User ${updated?.email} is updated`,
+        });
       }
     } catch (error) {
       return res.status(500).json({ message: "Internal Server Error", error });
