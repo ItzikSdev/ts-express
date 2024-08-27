@@ -1,12 +1,13 @@
 import { Request, Response } from "express";
-import User, { IUser } from "../db/user.model";
-
 import bcrypt from "bcrypt";
 import bcryptConfig from "../config/bcrypt";
+
+import User, { IUser } from "../db/user.model";
 import {
   accessTokenService,
   bcryptPasswordService,
 } from "../services/user.service";
+import { TServerCommand } from "../types/types";
 
 const UserControllerStaticClass = {
   /**
@@ -39,21 +40,21 @@ const UserControllerStaticClass = {
   },
   /**
    * login user
-   * @param req \
+   * @param req
    * @param res
    * @returns
    */
   login: async (req: Request, res: Response) => {
     try {
-      const { email, password, server } = req.body;
+      const { email, password, server } = req.body as {
+        email: string;
+        password: string;
+        server: TServerCommand;
+      };
       if (!email || !password)
         return res.status(400).json({ message: "Missing data" });
       const user: IUser | null = await User.findOne({ email }).exec();
-
       if (!user)
-        return res.status(401).json({ message: "Email or Password is Wrong!" });
-      const isPasswordValid = bcrypt.compareSync(password, user.password);
-      if (!isPasswordValid)
         return res.status(401).json({ message: "Email or Password is Wrong!" });
 
       const isPass = {
@@ -62,6 +63,11 @@ const UserControllerStaticClass = {
         email: user.email,
         access_token: user.access_token,
       };
+
+      const isPasswordValid = bcrypt.compareSync(password, user.password);
+      if (!isPasswordValid)
+        return res.status(401).json({ message: "Email or Password is Wrong!" });
+
       if (server.delete) {
         return isPass;
       }
@@ -105,7 +111,7 @@ const UserControllerStaticClass = {
       req.body = {
         email,
         password,
-        server: { delete: true },
+        server: { delete: true } as TServerCommand,
       };
       const isLogin = await UserControllerStaticClass.login(req, res);
       if (isLogin) {
@@ -130,7 +136,7 @@ const UserControllerStaticClass = {
       req.body = {
         email,
         password,
-        server: { delete: true },
+        server: { update: true } as TServerCommand,
       };
       const isLogin = await UserControllerStaticClass.login(req, res);
       if (isLogin) {
