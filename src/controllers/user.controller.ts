@@ -7,7 +7,11 @@ import {
   accessTokenService,
   bcryptPasswordService,
 } from "../services/user.service";
-import { TServerCommand, TUserReqBody } from "../types/types";
+import {
+  USER_SERVER_MESSAGE,
+  TServerCommand,
+  TUserReqBody,
+} from "../types/types";
 
 const UserControllerStaticClass = {
   /**
@@ -20,10 +24,14 @@ const UserControllerStaticClass = {
     try {
       const { name, email, password: passwordBody } = req.body as TUserReqBody;
       if (!name || !email || !passwordBody)
-        return res.status(400).json({ message: "Missing data" });
+        return res
+          .status(400)
+          .json({ message: USER_SERVER_MESSAGE.USER_MISSING_DATA });
       const isUserExists = await User.findOne({ email }).exec();
       if (isUserExists)
-        return res.status(401).json({ message: "User Already Exists" });
+        return res
+          .status(401)
+          .json({ message: USER_SERVER_MESSAGE.USER_EXISTS });
       const password: string = bcryptPasswordService(passwordBody);
       const access_token: string = accessTokenService(email, password);
       const newUser: IUser = await new User({
@@ -35,7 +43,9 @@ const UserControllerStaticClass = {
 
       return res.status(201).json(newUser);
     } catch (error) {
-      return res.status(500).json({ message: "Internal Server Error", error });
+      return res
+        .status(500)
+        .json({ message: USER_SERVER_MESSAGE.INTERNAL_ERROR, error });
     }
   },
   /**
@@ -51,10 +61,14 @@ const UserControllerStaticClass = {
       };
 
       if (!email || !password)
-        return res.status(400).json({ message: "Missing data" });
+        return res
+          .status(400)
+          .json({ message: USER_SERVER_MESSAGE.USER_MISSING_DATA });
       const user: IUser | null = await User.findOne({ email }).exec();
       if (!user)
-        return res.status(401).json({ message: "Email or Password is Wrong!" });
+        return res
+          .status(401)
+          .json({ message: USER_SERVER_MESSAGE.USER_EMAIL_OR_PASS_WRONG });
 
       const isPass: TUserReqBody = {
         id: user.id,
@@ -68,13 +82,17 @@ const UserControllerStaticClass = {
       if ((!isPasswordValid && server.delete) || server.update) return false;
 
       if (!isPasswordValid)
-        return res.status(401).json({ message: "Email or Password is Wrong!" });
+        return res
+          .status(401)
+          .json({ message: USER_SERVER_MESSAGE.USER_EMAIL_OR_PASS_WRONG });
 
       if (server.delete || server.update) return isPass;
 
       return res.status(200).json({ isPass });
     } catch (error) {
-      return res.status(500).json({ message: "Internal Server Error", error });
+      return res
+        .status(500)
+        .json({ message: USER_SERVER_MESSAGE.INTERNAL_ERROR, error });
     }
   },
   /**
@@ -95,7 +113,9 @@ const UserControllerStaticClass = {
         return res.status(200).json(users);
       }
     } catch (error) {
-      return res.status(500).json({ message: "Internal Server Error", error });
+      return res
+        .status(500)
+        .json({ message: USER_SERVER_MESSAGE.INTERNAL_ERROR, error });
     }
   },
   /**
@@ -108,7 +128,9 @@ const UserControllerStaticClass = {
     try {
       const { email, password } = req.body as TUserReqBody;
       if (!email || !password)
-        return res.status(400).json({ message: "Missing data" });
+        return res
+          .status(400)
+          .json({ message: USER_SERVER_MESSAGE.USER_MISSING_DATA });
       req.body = {
         email,
         password,
@@ -122,10 +144,14 @@ const UserControllerStaticClass = {
         const deleted = await User.findOneAndDelete({ _id: isLogin.id }).exec();
         res.status(202).json({ message: `User ${deleted?.email} is deleted` });
       } else {
-        return res.status(401).json({ message: "Email or Password is Wrong!" });
+        return res
+          .status(401)
+          .json({ message: USER_SERVER_MESSAGE.USER_EMAIL_OR_PASS_WRONG });
       }
     } catch (error) {
-      return res.status(500).json({ message: "Internal Server Error", error });
+      return res
+        .status(500)
+        .json({ message: USER_SERVER_MESSAGE.INTERNAL_ERROR, error });
     }
   },
   /**
@@ -138,7 +164,9 @@ const UserControllerStaticClass = {
     try {
       const { email, password, updatePassword } = req.body as TUserReqBody;
       if (!email || !password || !updatePassword)
-        return res.status(400).json({ message: "Missing data" });
+        return res
+          .status(400)
+          .json({ message: USER_SERVER_MESSAGE.USER_MISSING_DATA });
       req.body = {
         email,
         password,
@@ -166,10 +194,14 @@ const UserControllerStaticClass = {
           message: `User ${updated?.email} is updated`,
         });
       } else {
-        return res.status(401).json({ message: "Email or Password is Wrong!" });
+        return res
+          .status(401)
+          .json({ message: USER_SERVER_MESSAGE.USER_EMAIL_OR_PASS_WRONG });
       }
     } catch (error) {
-      return res.status(500).json({ message: "Internal Server Error", error });
+      return res
+        .status(500)
+        .json({ message: USER_SERVER_MESSAGE.INTERNAL_ERROR, error });
     }
   },
 };
