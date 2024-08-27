@@ -65,15 +65,13 @@ const UserControllerStaticClass = {
       };
 
       const isPasswordValid = bcrypt.compareSync(password, user.password);
-      if ((!isPasswordValid && server.delete) || server.update) {
-        return false;
-      }
+      if ((!isPasswordValid && server.delete) || server.update) return false;
+
       if (!isPasswordValid)
         return res.status(401).json({ message: "Email or Password is Wrong!" });
 
-      if (server.delete || server.update) {
-        return isPass;
-      }
+      if (server.delete || server.update) return isPass;
+
       return res.status(200).json({ isPass });
     } catch (error) {
       return res.status(500).json({ message: "Internal Server Error", error });
