@@ -7,7 +7,7 @@ import {
   accessTokenService,
   bcryptPasswordService,
 } from "../services/user.service";
-import { TServerCommand } from "../types/types";
+import { TServerCommand, TUserReqBody } from "../types/types";
 
 const UserControllerStaticClass = {
   /**
@@ -18,7 +18,7 @@ const UserControllerStaticClass = {
    */
   create: async (req: Request, res: Response) => {
     try {
-      const { name, email, password: passwordBody } = req.body;
+      const { name, email, password: passwordBody } = req.body as TUserReqBody;
       if (!name || !email || !passwordBody)
         return res.status(400).json({ message: "Missing data" });
       const isUserExists = await User.findOne({ email }).exec();
@@ -46,11 +46,10 @@ const UserControllerStaticClass = {
    */
   login: async (req: Request, res: Response) => {
     try {
-      const { email, password, server } = req.body as {
-        email: string;
-        password: string;
+      const { email, password, server } = req.body as TUserReqBody & {
         server: TServerCommand;
       };
+
       if (!email || !password)
         return res.status(400).json({ message: "Missing data" });
       const user: IUser | null = await User.findOne({ email }).exec();
@@ -84,7 +83,7 @@ const UserControllerStaticClass = {
    */
   select: async (req: Request, res: Response) => {
     try {
-      const { id: _id } = req.params;
+      const { id: _id } = req.params as TUserReqBody;
       const noSelect = ["-password", "-email", "-access_token"];
       if (_id) {
         const user = await User.findOne({ _id }, noSelect).exec();
@@ -105,7 +104,7 @@ const UserControllerStaticClass = {
    */
   delete: async (req: Request, res: Response) => {
     try {
-      const { email, password } = req.body;
+      const { email, password } = req.body as TUserReqBody;
       if (!email || !password)
         return res.status(400).json({ message: "Missing data" });
       req.body = {
@@ -130,7 +129,7 @@ const UserControllerStaticClass = {
    */
   update: async (req: Request, res: Response) => {
     try {
-      const { email, password, updatePassword } = req.body;
+      const { email, password, updatePassword } = req.body as TUserReqBody;
       if (!email || !password)
         return res.status(400).json({ message: "Missing data" });
       req.body = {
