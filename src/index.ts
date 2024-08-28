@@ -1,7 +1,7 @@
 import express, { Express } from "express";
 import dotenv from "dotenv";
 import { dbConnect } from "./config/dbConnect";
-import { healthRoute, userRoute, movieRoute } from "./routes";
+import { healthRoute, userRoute, searchRoute } from "./routes";
 
 dotenv.config({ path: ".env" }); // environment variables
 dbConnect(); // connect to db
@@ -11,7 +11,7 @@ app.use(express.json());
 
 app.use("/health", healthRoute);
 app.use("/users", userRoute);
-app.use("/movie", movieRoute);
+app.use("/search", searchRoute);
 
 const port = 3000;
 app.listen(port, () => {

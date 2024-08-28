@@ -1,17 +1,19 @@
 import { Request, Response } from "express";
 import bcrypt from "bcrypt";
 import bcryptConfig from "../config/bcrypt";
+import jwt from "jsonwebtoken";
 
 import User, { IUser } from "../db/user.model";
-import {
-  accessTokenService,
-  bcryptPasswordService,
-} from "../services/user.service";
+import { bcryptPasswordService } from "../services/user.service";
 import {
   USER_SERVER_MESSAGE,
   TServerCommand,
   TUserReqBody,
 } from "../types/types";
+import {
+  refreshTokenSecret,
+  accessTokenSecret,
+} from "../middlewares/user.middleware";
 
 const UserControllerStaticClass = {
   /**
@@ -33,12 +35,13 @@ const UserControllerStaticClass = {
           .status(401)
           .json({ message: USER_SERVER_MESSAGE.USER_EXISTS });
       const password: string = bcryptPasswordService(passwordBody);
-      const access_token: string = accessTokenService(email, password);
+      const refreshToken = jwt.sign(email, refreshTokenSecret);
+
       const newUser: IUser = await new User({
         name,
         email,
         password,
-        access_token,
+        refreshToken,
       }).save();
 
       return res.status(201).json(newUser);
@@ -56,9 +59,7 @@ const UserControllerStaticClass = {
    */
   login: async (req: Request, res: Response): Promise<TUserReqBody | any> => {
     try {
-      const { email, password, server } = req.body as TUserReqBody & {
-        server: TServerCommand;
-      };
+      const { email, password } = req.body as TUserReqBody;
 
       if (!email || !password)
         return res
@@ -70,29 +71,34 @@ const UserControllerStaticClass = {
           .status(401)
           .json({ message: USER_SERVER_MESSAGE.USER_EMAIL_OR_PASS_WRONG });
 
+      const accessToken = jwt.sign({ email }, accessTokenSecret, {
+        expiresIn: "60m",
+      });
+      const refreshToken = jwt.sign(email, refreshTokenSecret);
+      user.refreshToken = refreshToken; // update refreshToken in db
+      await user.save(); // save user in db
+
       const isPass: TUserReqBody = {
         id: user.id,
         name: user.name,
         email: user.email,
-        access_token: user.access_token,
+        accessToken,
         updatePassword: "",
       };
 
       const isPasswordValid = bcrypt.compareSync(password, user.password);
-      if (server) {
-        if (!isPasswordValid || server.delete || server.update) return false;
-      } else if (!isPasswordValid) {
-        return false;
-      }
+      if (!isPasswordValid) return false;
 
       if (!isPasswordValid)
         return res
           .status(401)
           .json({ message: USER_SERVER_MESSAGE.USER_EMAIL_OR_PASS_WRONG });
 
-      if (server.delete || server.update) return isPass;
-
-      return res.status(200).json({ isPass });
+      return res.status(200).json({
+        name: isPass.name,
+        email: isPass.email,
+        token: isPass.accessToken,
+      });
     } catch (error) {
       return res
         .status(500)
@@ -130,22 +136,14 @@ const UserControllerStaticClass = {
    */
   delete: async (req: Request, res: Response) => {
     try {
-      const { email, password } = req.body as TUserReqBody;
-      if (!email || !password)
+      const { email, verify } = req.body as TUserReqBody;
+      if (!email)
         return res
           .status(400)
           .json({ message: USER_SERVER_MESSAGE.USER_MISSING_DATA });
-      req.body = {
-        email,
-        password,
-        server: { delete: true } as TServerCommand,
-      };
-      const isLogin: TUserReqBody = await UserControllerStaticClass.login(
-        req,
-        res
-      );
-      if (isLogin) {
-        const deleted = await User.findOneAndDelete({ _id: isLogin.id }).exec();
+
+      if (verify) {
+        const deleted = await User.findOneAndDelete({ email: email }).exec();
         res.status(202).json({ message: `User ${deleted?.email} is deleted` });
       } else {
         return res
@@ -166,33 +164,21 @@ const UserControllerStaticClass = {
    */
   update: async (req: Request, res: Response) => {
     try {
-      const { email, password, updatePassword } = req.body as TUserReqBody;
+      const { email, password, updatePassword, verify } =
+        req.body as TUserReqBody;
       if (!email || !password || !updatePassword)
         return res
           .status(400)
           .json({ message: USER_SERVER_MESSAGE.USER_MISSING_DATA });
-      req.body = {
-        email,
-        password,
-        server: { update: true } as TServerCommand,
-      };
-      const isLogin: TUserReqBody = await UserControllerStaticClass.login(
-        req,
-        res
-      );
-      if (isLogin.id) {
-        const password: string = bcrypt.hashSync(
+
+      if (verify) {
+        const newPassword: string = bcrypt.hashSync(
           updatePassword,
           bcryptConfig.salt
         );
-        const access_token: string = accessTokenService(email, updatePassword);
-
-        const updated = await User.findByIdAndUpdate(
-          { _id: isLogin.id },
-          {
-            password,
-            access_token,
-          }
+        const updated = await User.findOneAndUpdate(
+          { email: email },
+          { password: newPassword }
         ).exec();
         res.status(202).json({
           message: `User ${updated?.email} is updated`,

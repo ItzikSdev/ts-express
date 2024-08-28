@@ -8,10 +8,14 @@ import bcryptConfig from "../config/bcrypt";
  * @param password
  * @returns
  */
-export const accessTokenService = (email: string, password: string): string => {
+export const accessTokenService = (
+  email: string,
+  password: string,
+  time: number
+): string => {
   try {
     const sha256 = crypto.SHA256;
-    const access_token: string = sha256(email + password).toString();
+    const access_token: string = sha256(email + password + time).toString();
     return access_token;
   } catch (error) {
     if (error instanceof Error) {

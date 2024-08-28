@@ -1,3 +1,4 @@
+import { VerifyCallback } from "jsonwebtoken";
 export type TServerCommand = {
   update: boolean;
   delete: boolean;
@@ -9,7 +10,8 @@ export type TUserReqBody = {
   email?: string;
   password?: string;
   updatePassword?: string;
-  access_token?: string;
+  accessToken?: string;
+  verify?: VerifyCallback;
 };
 
 export enum USER_SERVER_MESSAGE {

@@ -1,5 +1,5 @@
 import userRoute from "./users";
-import movieRoute from "./movie";
+import searchRoute from "./search";
 import { healthRoute } from "./health";
 
-export { userRoute, movieRoute, healthRoute };
+export { userRoute, searchRoute, healthRoute };
